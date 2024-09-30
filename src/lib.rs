@@ -61,8 +61,7 @@ pub fn caesar_shift_character(character: char, shift: isize) -> char {
     return_sanitise(&ASCII_LOWER[shifted_index as usize])
 }
 
-/// Returns the given text shifted by a specified `shift` value for a Caesar
-/// Cipher.
+/// Returns the given text shifted by a specified `shift` value.
 ///
 /// # Examples
 ///
