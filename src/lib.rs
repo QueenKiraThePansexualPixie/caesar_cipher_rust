@@ -26,13 +26,14 @@ pub fn shift_letter_index(index: isize, shift: isize) -> isize {
     }
 }
 
-/// Returns the given character, shifted by the given `shift` value for a
-/// caesar cipher.
+/// Returns the given character, shifted by the given `shift` value.
+/// 
+/// This function is used for shifting characters in a caesar cipher.
 ///
 /// Does not account for numbers, punctuation, or any symbols other than ASCII
 /// letters in the English alphabet.
 ///
-/// See [shift_letter_index] and [loop_overflow] for more information.
+/// See [shift_letter_index] for more information.
 pub fn caesar_shift_character(character: char, shift: isize) -> char {
     let [
             index_sanitise,
