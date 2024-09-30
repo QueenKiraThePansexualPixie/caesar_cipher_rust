@@ -1,113 +1,75 @@
+/// A 26-char array of the lowercase ASCII letters a-z.
 const ASCII_LOWER: [char; 26] = [
     'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's',
     't', 'u', 'v', 'w', 'x', 'y', 'z',
 ];
 
-fn get_ascii_lower_index(character: char) -> Option<usize> {
-    ASCII_LOWER.iter().position(|&c| c == character)
+/// Returns the index of the given `character` in the [`ASCII_LOWER`] array
+/// constant, or `None` if the character is not in the list.
+fn get_ascii_lower_index(character: char) -> Option<isize> {
+    ASCII_LOWER
+        .iter()
+        .position(|&c| c == character)
+        .map(|index| index as isize)
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-#[allow(non_camel_case_types)]
-enum size {
-    isize(isize),
-    usize(usize),
-}
+/// Returns the given index, shifted by the given `shift` value, looped to fit
+/// within the possible indeces of [`ASCII_LOWER`].
+fn shift_letter_index(index: isize, shift: isize) -> isize {
+    let ascii_lower_length: isize = ASCII_LOWER.len() as isize;
+    let shifted_index: isize = (index + shift) % ascii_lower_length;
 
-impl size {
-    const fn to_isize(&self) -> isize {
-        match self {
-            Self::isize(n) => *n,
-            Self::usize(n) => *n as isize,
-        }
-    }
-
-    const fn to_usize(&self) -> usize {
-        match self {
-            Self::isize(n) => *n as usize,
-            Self::usize(n) => *n,
-        }
-    }
-
-    #[deprecated = "Not useful"]
-    fn perform<T, F: FnOnce(Self) -> T>(self, performance: F) -> T {
-        performance(self)
-    }
-}
-
-impl std::ops::Add for size {
-    type Output = Self;
-
-    fn add(self, other: Self) -> Self::Output {
-        match self {
-            Self::isize(n1) => Self::isize(n1 + other.to_isize()),
-            Self::usize(n1) => Self::usize(n1 + other.to_usize()),
-        }
-    }
-}
-
-impl std::ops::Sub for size {
-    type Output = Self;
-
-    fn sub(self, other: Self) -> Self::Output {
-        match self {
-            Self::isize(n1) => Self::isize(n1 - other.to_isize()),
-            Self::usize(n1) => Self::usize(n1 - other.to_usize()),
-        }
-    }
-}
-
-impl From<isize> for size {
-    fn from(n: isize) -> Self {
-        Self::isize(n)
-    }
-}
-
-impl From<usize> for size {
-    fn from(n: usize) -> Self {
-        Self::usize(n)
-    }
-}
-
-fn loop_overflow(number: size, max: size, min: size) -> size {
-    match number {
-        n if n > max => loop_overflow(n - max, max, min),
-        n if n < min => loop_overflow(n + min, max, min),
-        _ => number,
-    }
-}
-
-fn shift_letter_index(index: size, shift: size) -> size {
-    // TODO: account for when `shift` is negative and index is usize, so result 
-    // TODO: is not bottomed out at 0
-    loop_overflow(index + shift, 25usize.into(), 0usize.into())
-}
-
-// Does not account for numbers or punctuation.
-fn caesar_shift_character(character: char, shift: isize) -> char {
-    if character.is_ascii_uppercase() {
-        let lower_character: char = character.to_ascii_lowercase();
-
-        let index: usize = match get_ascii_lower_index(lower_character) {
-            Some(index) => index,
-            None => return character,
-        };
-
-        let shifted_index: usize = shift_letter_index(index.into(), shift.into()).to_usize();
-
-        ASCII_LOWER[shifted_index].to_ascii_uppercase()
+    if shifted_index < 0 {
+        ascii_lower_length - shifted_index.abs()
     } else {
-        let index: usize = match get_ascii_lower_index(character) {
-            Some(index) => index,
-            None => return character,
-        };
-
-        let shifted_index: usize = shift_letter_index(index.into(), shift.into()).to_usize();
-
-        ASCII_LOWER[shifted_index]
+        shifted_index
     }
 }
 
+/// Returns the given character, shifted by the given `shift` value for a
+/// caesar cipher.
+///
+/// Does not account for numbers, punctuation, or any symbols other than ASCII
+/// letters in the English alphabet.
+///
+/// See [shift_letter_index] and [loop_overflow] for more information.
+fn caesar_shift_character(character: char, shift: isize) -> char {
+    let [
+            index_sanitise,
+            return_sanitise,
+        ]: [fn(&char) -> char; 2]
+        = if character.is_ascii_uppercase() {
+        [
+            char::to_ascii_lowercase,
+            char::to_ascii_uppercase,
+        ]
+    } else {
+        [
+            |c: &char| c.to_owned(),
+            |c: &char| c.to_owned(),
+        ]
+    };
+
+    let index: isize = match get_ascii_lower_index(index_sanitise(&character)) {
+        Some(index) => index,
+        None => return character,
+    };
+
+    let shifted_index: isize = shift_letter_index(index, shift);
+
+    return_sanitise(&ASCII_LOWER[shifted_index as usize])
+}
+
+/// Returns the given text shifted by a specified `shift` value for a Caesar
+/// Cipher.
+///
+/// # Examples
+///
+/// ```
+/// use rust_caesar_cipher::caesar_cipher;
+///
+/// assert_eq!(caesar_cipher(1, "Hello world"), "Ifmmp xpsme");
+/// ```
 pub fn caesar_cipher(shift: isize, text: &str) -> String {
     let mut result = String::new();
     for character in text.chars() {
@@ -127,34 +89,24 @@ mod tests {
     #[case('A', None)]
     #[case('1', None)]
     #[case('&', None)]
-    fn test_get_ascii_lower_index(#[case] character: char, #[case] result: Option<usize>) {
+    fn test_get_ascii_lower_index(#[case] character: char, #[case] result: Option<isize>) {
         assert_eq!(get_ascii_lower_index(character), result);
     }
 
     #[rstest]
-    #[case(10isize.into(), 10isize.into(), 0isize.into(), 10isize.into())]
-    #[case(0isize.into(), 10isize.into(), 0isize.into(), 0isize.into())]
-    #[case(20isize.into(), 10isize.into(), 0isize.into(), 10isize.into())]
-    #[case((-10isize).into(), 10isize.into(), 0isize.into(), 0isize.into())]
-    fn test_remove_overflow_size(
-        #[case] number: size,
-        #[case] max: size,
-        #[case] min: size,
-        #[case] result: size,
-    ) {
-        assert_eq!(loop_overflow(number, max, min), result);
-    }
-
-    #[rstest]
-    #[case(5usize.into(), 10isize.into(), 15usize.into())]
-    #[case(5usize.into(), (-10isize).into(), 21usize.into())]
-    fn test_shift_letter_index(#[case] index: size, #[case] shift: size, #[case] result: size) {
+    #[case(5, 10, 15)]
+    #[case(5, -10, 21)]
+    fn test_shift_letter_index(#[case] index: isize, #[case] shift: isize, #[case] result: isize) {
         assert_eq!(shift_letter_index(index, shift), result);
     }
 
     #[rstest]
     #[case('a', 1, 'b')]
     #[case('A', 1, 'B')]
+    #[case('a', 3, 'd')]
+    #[case('A', 3, 'D')]
+    #[case('a', -1, 'z')]
+    #[case('A', -1, 'Z')]
     #[case('x', 3, 'a')]
     #[case('X', 3, 'A')]
     #[case('1', 1, '1')]
