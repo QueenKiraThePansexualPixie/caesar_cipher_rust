@@ -1,12 +1,12 @@
 /// A 26-char array of the lowercase ASCII letters a-z.
-const ASCII_LOWER: [char; 26] = [
+pub const ASCII_LOWER: [char; 26] = [
     'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's',
     't', 'u', 'v', 'w', 'x', 'y', 'z',
 ];
 
 /// Returns the index of the given `character` in the [`ASCII_LOWER`] array
 /// constant, or `None` if the character is not in the list.
-fn get_ascii_lower_index(character: char) -> Option<isize> {
+pub fn get_ascii_lower_index(character: char) -> Option<isize> {
     ASCII_LOWER
         .iter()
         .position(|&c| c == character)
@@ -15,7 +15,7 @@ fn get_ascii_lower_index(character: char) -> Option<isize> {
 
 /// Returns the given index, shifted by the given `shift` value, looped to fit
 /// within the possible indeces of [`ASCII_LOWER`].
-fn shift_letter_index(index: isize, shift: isize) -> isize {
+pub fn shift_letter_index(index: isize, shift: isize) -> isize {
     let ascii_lower_length: isize = ASCII_LOWER.len() as isize;
     let shifted_index: isize = (index + shift) % ascii_lower_length;
 
@@ -33,7 +33,7 @@ fn shift_letter_index(index: isize, shift: isize) -> isize {
 /// letters in the English alphabet.
 ///
 /// See [shift_letter_index] and [loop_overflow] for more information.
-fn caesar_shift_character(character: char, shift: isize) -> char {
+pub fn caesar_shift_character(character: char, shift: isize) -> char {
     let [
             index_sanitise,
             return_sanitise,
